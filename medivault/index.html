@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediTrack – Personal Medicine Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- ── Mobile header ─────────────────────────────── -->
+    <header id="mobile-header">
+      <button id="hamburger" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="brand">
+        <span class="brand-icon">💊</span>
+        <span class="brand-name">MediTrack</span>
+      </div>
+      <button id="mobile-add-btn" aria-label="Add medicine">＋</button>
+    </header>
+
+    <!-- ── Sidebar overlay (mobile) ──────────────────── -->
+    <div id="overlay"></div>
+
+    <!-- ── Sidebar ───────────────────────────────────── -->
+    <aside id="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-icon">💊</span>
+        <div>
+          <div class="brand-name">MediTrack</div>
+          <div class="brand-sub">Medicine Tracker</div>
+        </div>
+      </div>
+      <nav id="sidebar-nav">
+        <a href="#" class="nav-link active" data-page="page-dashboard">
+          <span class="nav-icon">🏠</span> Dashboard
+        </a>
+        <a href="#" class="nav-link" data-page="page-medicines">
+          <span class="nav-icon">💊</span> All Medicines
+        </a>
+        <a href="#" class="nav-link" data-page="page-symptom-search">
+          <span class="nav-icon">🔍</span> Symptom Search
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="sidebar-add-btn" class="btn btn-primary btn-block">
+          ＋ Add Medicine
+        </button>
+      </div>
+    </aside>
+
+    <!-- ── Main content ───────────────────────────────── -->
+    <main id="main-content">
+
+      <!-- ═══════════════════════════════════════════════
+           PAGE: DASHBOARD
+      ══════════════════════════════════════════════════ -->
+      <div id="page-dashboard" class="page active">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">Your medicine inventory overview</p>
+          </div>
+          <button class="btn btn-primary" onclick="openAddForm()">＋ Add Medicine</button>
+        </div>
+
+        <!-- Stats grid -->
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card" id="stat-total" data-filter="">
+            <div class="stat-icon stat-icon-primary">💊</div>
+            <div class="stat-number" id="stat-total-num">0</div>
+            <div class="stat-label">Total Medicines</div>
+          </div>
+          <div class="stat-card" id="stat-active" data-filter="active">
+            <div class="stat-icon stat-icon-success">✅</div>
+            <div class="stat-number" id="stat-active-num">0</div>
+            <div class="stat-label">Active</div>
+          </div>
+          <div class="stat-card" id="stat-expiring" data-filter="expiring_soon">
+            <div class="stat-icon stat-icon-warning">⚠️</div>
+            <div class="stat-number" id="stat-expiring-num">0</div>
+            <div class="stat-label">Expiring Soon</div>
+          </div>
+          <div class="stat-card" id="stat-expired" data-filter="expired">
+            <div class="stat-icon stat-icon-danger">❌</div>
+            <div class="stat-number" id="stat-expired-num">0</div>
+            <div class="stat-label">Expired</div>
+          </div>
+          <div class="stat-card" id="stat-lowstock" data-filter="low_stock">
+            <div class="stat-icon stat-icon-orange">📦</div>
+            <div class="stat-number" id="stat-lowstock-num">0</div>
+            <div class="stat-label">Low Stock</div>
+          </div>
+        </div>
+
+        <!-- Notification area -->
+        <div id="notification-area"></div>
+
+        <!-- Symptom search widget on dashboard -->
+        <div class="card symptom-widget">
+          <h2 class="section-title">Search by Symptom</h2>
+          <p class="section-subtitle">Find medicines in your inventory tagged with a symptom.</p>
+          <div class="search-row">
+            <input type="text" id="dash-symptom-input" class="input" placeholder='e.g. "headache", "I have a fever and cough"' />
+            <button class="btn btn-primary" onclick="runDashSymptomSearch()">Search</button>
+          </div>
+          <div class="chip-row" id="dash-example-chips">
+            <span class="chip-label">Try:</span>
+            <button class="chip" onclick="dashChipSearch('headache')">headache</button>
+            <button class="chip" onclick="dashChipSearch('fever')">fever</button>
+            <button class="chip" onclick="dashChipSearch('cough')">cough</button>
+            <button class="chip" onclick="dashChipSearch('allergy')">allergy</button>
+            <button class="chip" onclick="dashChipSearch('stomach pain')">stomach pain</button>
+          </div>
+          <div id="dash-symptom-results"></div>
+        </div>
+
+        <!-- Category sections -->
+        <div class="category-section">
+          <div class="category-header">
+            <span class="category-dot dot-active"></span>
+            <h2 class="category-title">Active Medicines</h2>
+            <span class="category-count" id="count-active">0</span>
+          </div>
+          <div class="medicine-grid" id="grid-active"></div>
+        </div>
+
+        <div class="category-section">
+          <div class="category-header">
+            <span class="category-dot dot-expiring"></span>
+            <h2 class="category-title">Expiring Soon</h2>
+            <span class="category-count" id="count-expiring">0</span>
+          </div>
+          <div class="medicine-grid" id="grid-expiring"></div>
+        </div>
+
+        <div class="category-section">
+          <div class="category-header">
+            <span class="category-dot dot-expired"></span>
+            <h2 class="category-title">Expired Medicines</h2>
+            <span class="category-count" id="count-expired">0</span>
+          </div>
+          <div class="medicine-grid" id="grid-expired"></div>
+        </div>
+
+        <div class="category-section">
+          <div class="category-header">
+            <span class="category-dot dot-lowstock"></span>
+            <h2 class="category-title">Low Stock</h2>
+            <span class="category-count" id="count-lowstock">0</span>
+          </div>
+          <div class="medicine-grid" id="grid-lowstock"></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════
+           PAGE: ALL MEDICINES
+      ══════════════════════════════════════════════════ -->
+      <div id="page-medicines" class="page">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">All Medicines</h1>
+            <p class="page-subtitle" id="medicines-count-label">0 medicines</p>
+          </div>
+          <button class="btn btn-primary" onclick="openAddForm()">＋ Add Medicine</button>
+        </div>
+
+        <div class="card filter-card">
+          <!-- Text search -->
+          <div class="search-row">
+            <div class="search-input-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="medicines-search" class="input search-input" placeholder="Search by name, use case, or symptoms…" oninput="applyFilters()" />
+            </div>
+          </div>
+          <!-- Status filters -->
+          <div class="filter-row">
+            <span class="filter-label">Status:</span>
+            <div class="filter-chips" id="status-filters">
+              <button class="filter-chip active" data-status="">All</button>
+              <button class="filter-chip" data-status="active">Active</button>
+              <button class="filter-chip" data-status="expiring_soon">Expiring Soon</button>
+              <button class="filter-chip" data-status="expired">Expired</button>
+              <button class="filter-chip" data-status="low_stock">Low Stock</button>
+            </div>
+          </div>
+          <!-- Type filter -->
+          <div class="filter-row">
+            <span class="filter-label">Type:</span>
+            <select id="type-filter" class="input select-sm" onchange="applyFilters()">
+              <option value="">All Types</option>
+              <option value="Tablet">Tablet</option>
+              <option value="Capsule">Capsule</option>
+              <option value="Syrup">Syrup</option>
+              <option value="Cream">Cream</option>
+              <option value="Drops">Drops</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="medicine-grid" id="grid-all"></div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════
+           PAGE: SYMPTOM SEARCH
+      ══════════════════════════════════════════════════ -->
+      <div id="page-symptom-search" class="page">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Symptom Search</h1>
+            <p class="page-subtitle">Find medicines in your inventory by symptom</p>
+          </div>
+        </div>
+
+        <div class="card symptom-page-card">
+          <p class="symptom-page-desc">
+            Enter a symptom or describe how you feel. MediTrack will search your stored medicine information for matches.
+          </p>
+          <div class="search-row">
+            <input type="text" id="symptom-page-input" class="input" placeholder='e.g. "headache and fever", "I have a sore throat"' />
+            <button class="btn btn-primary" onclick="runSymptomPageSearch()">Search</button>
+          </div>
+          <div class="chip-row">
+            <span class="chip-label">Quick examples:</span>
+            <button class="chip" onclick="symptomPageChip('headache')">headache</button>
+            <button class="chip" onclick="symptomPageChip('fever')">fever</button>
+            <button class="chip" onclick="symptomPageChip('cough')">cough</button>
+            <button class="chip" onclick="symptomPageChip('cold')">cold</button>
+            <button class="chip" onclick="symptomPageChip('allergy')">allergy</button>
+            <button class="chip" onclick="symptomPageChip('stomach pain')">stomach pain</button>
+          </div>
+        </div>
+
+        <div id="symptom-page-results"></div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════
+           PAGE: ADD / EDIT MEDICINE
+      ══════════════════════════════════════════════════ -->
+      <div id="page-add-edit" class="page">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title" id="form-page-title">Add Medicine</h1>
+            <p class="page-subtitle">Fill in the details below</p>
+          </div>
+          <button class="btn btn-secondary" onclick="cancelForm()">← Back</button>
+        </div>
+
+        <form id="medicine-form" class="card form-card" onsubmit="submitForm(event)" novalidate>
+          <input type="hidden" id="form-id" />
+
+          <!-- Basic info -->
+          <div class="form-section-title">Basic Information</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="f-name">Medicine Name <span class="required">*</span></label>
+              <input type="text" id="f-name" class="input" placeholder="e.g. Paracetamol" />
+              <span class="form-error" id="err-name"></span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-type">Medicine Type <span class="required">*</span></label>
+              <select id="f-type" class="input">
+                <option value="">Select type…</option>
+                <option value="Tablet">Tablet</option>
+                <option value="Capsule">Capsule</option>
+                <option value="Syrup">Syrup</option>
+                <option value="Cream">Cream</option>
+                <option value="Drops">Drops</option>
+                <option value="Other">Other</option>
+              </select>
+              <span class="form-error" id="err-type"></span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="f-useCase">Use Case / Purpose <span class="required">*</span></label>
+            <input type="text" id="f-useCase" class="input" placeholder="e.g. Fever, headache, pain relief" />
+            <span class="form-error" id="err-useCase"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="f-symptoms">Symptoms <span class="required">*</span></label>
+            <input type="text" id="f-symptoms" class="input" placeholder="e.g. headache, fever, body ache (comma-separated)" />
+            <span class="form-hint">Used for symptom search matching.</span>
+            <span class="form-error" id="err-symptoms"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="f-dosage">Dosage</label>
+            <input type="text" id="f-dosage" class="input" placeholder="e.g. 500mg every 4–6 hours" />
+          </div>
+
+          <!-- Stock & dates -->
+          <div class="form-section-title">Stock &amp; Dates</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="f-quantity">Quantity <span class="required">*</span></label>
+              <input type="number" id="f-quantity" class="input" min="0" placeholder="0" />
+              <span class="form-error" id="err-quantity"></span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-minimumStock">Minimum Stock Level <span class="required">*</span></label>
+              <input type="number" id="f-minimumStock" class="input" min="0" placeholder="5" />
+              <span class="form-hint">Show Low Stock alert at or below this level.</span>
+              <span class="form-error" id="err-minimumStock"></span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="f-expiryDate">Expiry Date <span class="required">*</span></label>
+              <input type="date" id="f-expiryDate" class="input" />
+              <span class="form-error" id="err-expiryDate"></span>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="form-section-title">Additional Details</div>
+          <div class="form-group">
+            <label class="form-label" for="f-notes">Notes</label>
+            <textarea id="f-notes" class="input textarea" rows="3" placeholder="Any additional notes…"></textarea>
+          </div>
+
+          <!-- Safety notice -->
+          <div class="form-notice">
+            ℹ️ Information you enter here is for personal inventory tracking only.
+            MediTrack does not provide medical advice.
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="cancelForm()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="form-submit-btn">Add Medicine</button>
+          </div>
+        </form>
+      </div>
+
+    </main><!-- /#main-content -->
+  </div><!-- /#app -->
+
+  <!-- ── Delete confirmation modal ─────────────────── -->
+  <div id="delete-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+    <div class="modal">
+      <div class="modal-icon">⚠️</div>
+      <h2 class="modal-title" id="delete-modal-title">Delete Medicine</h2>
+      <p class="modal-body">Are you sure you want to delete</p>
+      <p class="modal-medicine-name" id="delete-medicine-name"></p>
+      <p class="modal-warning">This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Toast container ────────────────────────────── -->
+  <div id="toast-container" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
